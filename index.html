@@ -8,7 +8,7 @@
     <!-- Только Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- Наши скрипты -->
+    <!-- Наши скрипты (порядок важен!) -->
     <script src="firebase.js" defer></script>
     <script src="game.js" defer></script>
     <script src="script.js" defer></script>
@@ -17,7 +17,6 @@
 <body>
     <div class="animated-bg"></div>
     <div id="connectionIndicator" class="indicator" title="Статус соединения"></div>
-    
     <div id="gameContainer">
         <div id="menu">
             <div class="menu-header">
@@ -38,7 +37,6 @@
                 <button class="menu-btn" id="playBtn">Играть</button>
             </div>
         </div>
-
         <div id="roomPanel">
             <button class="menu-btn" id="autoSearchBtn">Авто поиск</button>
             <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
@@ -49,7 +47,6 @@
             <div class="status" id="roomStatus"></div>
             <button class="menu-btn" id="backToMenuBtn">Назад</button>
         </div>
-
         <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
     </div>
 </body>
