@@ -1,9 +1,10 @@
-// game.js
 const TILE_SIZE = 40;
 const MAP_WIDTH = 20;
 const MAP_HEIGHT = 15;
 
-const maps = [ ... ]; // здесь должен быть полный массив из 4 карт (как я давал ранее)
+const maps = [
+    // ... вставьте сюда полный массив карт (4 шт.) как было ранее ...
+];
 
 class Tank {
     constructor(x, y, angle, peerId, name) {
@@ -42,7 +43,6 @@ let projectiles = [];
 let bonuses = [];
 let map = [];
 let gameActive = false;
-let gameInterval = null;
 
 function loadMap(mapId) {
     map = maps[mapId].map(row => [...row]);
