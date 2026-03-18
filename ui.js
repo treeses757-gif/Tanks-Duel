@@ -16,15 +16,13 @@ const tanksBtn = document.getElementById('tanksBtn');
 const friendsBtn = document.getElementById('friendsBtn');
 const indicator = document.getElementById('connectionIndicator');
 
-// Функция обновления индикатора
 function setIndicator(state) {
     indicator.className = 'indicator ' + state;
 }
 
-// Начальное состояние
 setIndicator('idle');
 
-// Генерация случайного peerId (вместо PeerJS)
+// Генерация случайного peerId (заменяет PeerJS)
 function generatePeerId() {
     return 'player_' + Math.random().toString(36).substr(2, 9);
 }
@@ -38,19 +36,11 @@ playBtn.addEventListener('click', () => {
     currentUser.name = nick;
     menuDiv.style.display = 'none';
     roomPanel.style.display = 'flex';
-    setIndicator('connecting'); // начали подключение
+    setIndicator('connecting');
 });
 
 backToMenuBtn.addEventListener('click', () => {
     leaveRoom();
-    // Остановка игровых слушателей
-    if (gameInterval) clearInterval(gameInterval);
-    if (gameStateListener) gameStateListener();
-    if (playerInputsListener) playerInputsListener();
-    gameStateListener = null;
-    playerInputsListener = null;
-    gameActive = false;
-    
     roomPanel.style.display = 'none';
     menuDiv.style.display = 'flex';
     gameCanvas.classList.add('hidden');
@@ -62,7 +52,7 @@ createRoomBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
         setIndicator('connecting');
-        const peerId = generatePeerId();
+        const peerId = generatePeerId(); // вместо initPeer
         const code = await createRoom(peerId);
         roomStatus.innerText = `Комната создана. Код: ${code}. Ожидание игрока...`;
         listenRoom(code, {
