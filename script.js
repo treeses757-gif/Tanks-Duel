@@ -1,53 +1,11 @@
 // script.js
-let peer;
-let conn;
 let keys = {};
-let peerOpenPromise = null; // для ожидания открытия Peer
+let gameInterval = null;
+let gameStateListener = null;
+let playerInputsListener = null;
 
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
-
-function initPeer() {
-    if (peerOpenPromise) return peerOpenPromise;
-    peerOpenPromise = new Promise((resolve, reject) => {
-        if (peer && peer.id) {
-            resolve(peer.id);
-            return;
-        }
-        peer = new Peer();
-        peer.on('open', (id) => {
-            console.log('PeerJS: открыт с id', id);
-            setIndicator('connected');
-            resolve(id);
-        });
-        peer.on('error', (err) => {
-            console.error('PeerJS ошибка:', err);
-            setIndicator('error');
-            reject(err);
-        });
-    });
-    return peerOpenPromise;
-}
-
-function setupConnection() {
-    conn.on('open', () => {
-        console.log('Соединение установлено');
-        setIndicator('connected');
-    });
-    conn.on('data', (data) => {
-        if (data.type === 'input') {
-            if (currentUser.isHost) {
-                handleRemoteInput(data);
-            }
-        } else if (data.type === 'gameState') {
-            applyGameState(data.state);
-        }
-    });
-    conn.on('close', () => {
-        console.log('Соединение закрыто');
-        setIndicator('idle');
-    });
-}
 
 function startGame(roomData) {
     roomStatus.innerText = 'Игра начинается...';
@@ -63,33 +21,58 @@ function startGame(roomData) {
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
     
-    if (!currentUser.isHost) {
-        const hostPeerId = p1.peerId;
-        conn = peer.connect(hostPeerId);
-        setupConnection();
-    } else {
+    if (currentUser.isHost) {
+        // Хост: запускаем игровой цикл и слушаем ввод от клиента
         gameInterval = setInterval(updateGame, 50);
+        playerInputsListener = listenPlayerInputs((inputs) => {
+            // Применяем ввод от другого игрока (если есть)
+            for (let peerId in inputs) {
+                if (peerId !== currentUser.peerId) {
+                    handleRemoteInput({
+                        peerId: peerId,
+                        keys: inputs[peerId]
+                    });
+                }
+            }
+        });
+    } else {
+        // Клиент: слушаем состояние игры и отправляем свой ввод
+        gameStateListener = listenGameState((state) => {
+            applyGameState(state);
+        });
+        // Запускаем отправку ввода (каждые 50 мс)
+        setInterval(() => {
+            if (gameActive) {
+                sendPlayerInput({
+                    w: keys['KeyW'],
+                    a: keys['KeyA'],
+                    s: keys['KeyS'],
+                    d: keys['KeyD'],
+                    space: keys['Space']
+                });
+            }
+        }, 50);
     }
 }
 
 function updateGame() {
-    if (!gameActive) return;
-    if (currentUser.isHost) {
-        handleInput(currentUser.peerId);
-        updateProjectiles();
-        spawnBonuses();
-        if (conn && conn.open) {
-            conn.send({
-                type: 'gameState',
-                state: {
-                    players: players,
-                    projectiles: projectiles,
-                    bonuses: bonuses,
-                    mapId: currentMapId
-                }
-            });
-        }
-    }
+    if (!gameActive || !currentUser.isHost) return;
+    
+    // Обрабатываем ввод хоста
+    handleInput(currentUser.peerId);
+    
+    // Обновляем снаряды и бонусы
+    updateProjectiles();
+    spawnBonuses();
+    
+    // Отправляем состояние в Firestore
+    updateGameState({
+        players: players,
+        projectiles: projectiles,
+        bonuses: bonuses,
+        mapId: currentMapId
+    });
+    
     draw();
 }
 
@@ -154,7 +137,6 @@ function applyGameState(state) {
 
 function draw() {
     ctx.clearRect(0, 0, 800, 600);
-    // Карта
     for (let row = 0; row < MAP_HEIGHT; row++) {
         for (let col = 0; col < MAP_WIDTH; col++) {
             if (map[row][col] === 1) {
@@ -168,14 +150,12 @@ function draw() {
             }
         }
     }
-    // Бонусы
     bonuses.forEach(b => {
         ctx.fillStyle = b.type === 'speed' ? '#ffaa00' : '#00aaff';
         ctx.beginPath();
         ctx.arc(b.x + TILE_SIZE/2, b.y + TILE_SIZE/2, 15, 0, 2*Math.PI);
         ctx.fill();
     });
-    // Танки
     for (let id in players) {
         const p = players[id];
         ctx.save();
@@ -200,7 +180,6 @@ function draw() {
             ctx.stroke();
         }
     }
-    // Снаряды
     ctx.fillStyle = '#ff0';
     projectiles.forEach(p => {
         ctx.beginPath();
@@ -208,19 +187,3 @@ function draw() {
         ctx.fill();
     });
 }
-
-setInterval(() => {
-    if (gameActive && !currentUser.isHost && conn && conn.open) {
-        conn.send({
-            type: 'input',
-            peerId: currentUser.peerId,
-            keys: {
-                w: keys['KeyW'],
-                a: keys['KeyA'],
-                s: keys['KeyS'],
-                d: keys['KeyD'],
-                space: keys['Space']
-            }
-        });
-    }
-}, 50);
