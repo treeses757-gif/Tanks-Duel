@@ -1,4 +1,3 @@
-// ui.js
 const menuDiv = document.getElementById('menu');
 const roomPanel = document.getElementById('roomPanel');
 const gameCanvas = document.getElementById('gameCanvas');
@@ -19,6 +18,7 @@ const indicator = document.getElementById('connectionIndicator');
 function setIndicator(state) {
     indicator.className = 'indicator ' + state;
 }
+
 setIndicator('idle');
 
 function generatePeerId() {
