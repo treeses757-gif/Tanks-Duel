@@ -111,14 +111,12 @@ function leaveRoom() {
     }
 }
 
-// ---- Дополнительные функции для игрового процесса ----
-
+// ===== НОВЫЕ ФУНКЦИИ ДЛЯ ИГРЫ =====
 function getGameRoomRef() {
     if (!currentUser.roomId) return null;
     return db.collection('rooms').doc(currentUser.roomId);
 }
 
-// Хост обновляет состояние игры
 async function updateGameState(gameState) {
     const ref = getGameRoomRef();
     if (!ref) return;
@@ -128,7 +126,6 @@ async function updateGameState(gameState) {
     });
 }
 
-// Клиент слушает изменения состояния
 function listenGameState(callback) {
     const ref = getGameRoomRef();
     if (!ref) return null;
@@ -140,17 +137,14 @@ function listenGameState(callback) {
     });
 }
 
-// Клиент отправляет свой ввод
 async function sendPlayerInput(inputData) {
     const ref = getGameRoomRef();
     if (!ref) return;
-    // Используем update с динамическим ключом
     await ref.update({
         [`playerInputs.${currentUser.peerId}`]: inputData
     });
 }
 
-// Хост слушает ввод игроков
 function listenPlayerInputs(callback) {
     const ref = getGameRoomRef();
     if (!ref) return null;
