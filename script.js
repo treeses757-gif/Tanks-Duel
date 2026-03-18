@@ -8,16 +8,12 @@ window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function startGame(roomData) {
-    console.log('🎮 startGame called', roomData);
+    console.log('🎮 startGame вызван, данные комнаты:', roomData);
     roomStatus.innerText = 'Игра начинается...';
     roomPanel.style.display = 'none';
     gameCanvas.classList.remove('hidden');
     gameActive = true;
     
-    if (roomData.mapId === undefined) {
-        console.error('mapId is undefined, using default 0');
-        roomData.mapId = 0;
-    }
     currentMapId = roomData.mapId;
     loadMap(currentMapId);
     
@@ -26,19 +22,19 @@ function startGame(roomData) {
     players = {};
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
-    console.log('👥 Игроки инициализированы:', players);
+    console.log('👥 Игроки созданы:', players);
     
-    // Отрисовываем сразу
+    // Обязательно рисуем первый кадр
     draw();
     
     if (currentUser.isHost) {
-        console.log('👑 Я хост, запускаю игровой цикл');
+        console.log('👑 Роль: ХОСТ, peerId =', currentUser.peerId);
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
         
         if (playerInputsListener) playerInputsListener();
         playerInputsListener = listenPlayerInputs((inputs) => {
-            console.log('👑 Хост получил вводы:', inputs);
+            console.log('👑 Получены вводы от клиентов:', inputs);
             for (let peerId in inputs) {
                 if (peerId !== currentUser.peerId) {
                     handleRemoteInput({
@@ -49,11 +45,12 @@ function startGame(roomData) {
             }
         });
     } else {
-        console.log('💻 Я клиент, слушаю gameState');
+        console.log('💻 Роль: КЛИЕНТ, peerId =', currentUser.peerId);
         if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
-            console.log('💻 Клиент получил состояние:', state);
+            console.log('💻 Получено состояние от хоста:', state);
             applyGameState(state);
+            draw(); // дополнительная перерисовка для надёжности
         });
         
         if (clientInputInterval) clearInterval(clientInputInterval);
@@ -66,7 +63,8 @@ function startGame(roomData) {
                     d: keys['KeyD'],
                     space: keys['Space']
                 };
-                sendPlayerInput(input); // отправляем всегда
+                // Отправляем всегда, даже если все false (для отладки)
+                sendPlayerInput(input);
             }
         }, 50);
     }
@@ -117,7 +115,10 @@ function handleInput(playerId) {
 
 function handleRemoteInput(data) {
     const player = players[data.peerId];
-    if (!player) return;
+    if (!player) {
+        console.warn('⚠️ Получен ввод для неизвестного игрока', data.peerId);
+        return;
+    }
     let dx = 0, dy = 0;
     if (data.keys.w) dy = -player.speed;
     if (data.keys.s) dy = player.speed;
@@ -146,13 +147,13 @@ function applyGameState(state) {
     bonuses = state.bonuses;
     currentMapId = state.mapId;
     loadMap(currentMapId);
-    draw();
+    // Отрисовка будет вызвана после получения состояния в listenGameState
 }
 
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, 800, 600);
-    // Карта
+    // Отрисовка карты
     for (let row = 0; row < MAP_HEIGHT; row++) {
         for (let col = 0; col < MAP_WIDTH; col++) {
             if (map[row][col] === 1) {
