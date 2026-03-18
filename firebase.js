@@ -111,7 +111,7 @@ function leaveRoom() {
     }
 }
 
-// ===== НОВЫЕ ФУНКЦИИ ДЛЯ ИГРЫ =====
+// ===== Игровые функции Firestore =====
 function getGameRoomRef() {
     if (!currentUser.roomId) return null;
     return db.collection('rooms').doc(currentUser.roomId);
