@@ -3,53 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tanks Duel</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Firebase (PeerJS удалён) -->
+    <title>Tanks Duel (тест)</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #1a1a2e; }
+        #gameCanvas { display: block; width: 800px; height: 600px; margin: 20px auto; border: 2px solid #e94560; }
+        #panel { text-align: center; color: white; font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 5px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        input { padding: 10px; margin: 5px; }
+        #log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #0f3460; color: lime; padding: 10px; font-family: monospace; }
+    </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- Наши скрипты (порядок важен!) -->
-    <script src="firebase.js" defer></script>
-    <script src="game.js" defer></script>
-    <script src="script.js" defer></script>
-    <script src="ui.js" defer></script>
 </head>
 <body>
-    <div class="animated-bg"></div>
-    <div id="connectionIndicator" class="indicator" title="Статус соединения"></div>
-    <div id="gameContainer">
-        <div id="menu">
-            <div class="menu-header">
-                <h1>ТАНКИ ДУЭЛЬ</h1>
-                <div class="tank-preview">
-                    <svg viewBox="0 0 100 100">
-                        <rect x="30" y="40" width="40" height="30" rx="5" fill="#e94560"/>
-                        <circle cx="50" cy="55" r="12" fill="#16213e"/>
-                        <rect x="45" y="20" width="10" height="25" fill="#e94560"/>
-                    </svg>
-                </div>
-                <input type="text" id="nicknameInput" class="input-field" placeholder="Введи ник" maxlength="15">
-            </div>
-            <div class="menu-buttons">
-                <button class="menu-btn" id="shopBtn" disabled>Магазин</button>
-                <button class="menu-btn" id="tanksBtn" disabled>Танки</button>
-                <button class="menu-btn" id="friendsBtn" disabled>Друзья</button>
-                <button class="menu-btn" id="playBtn">Играть</button>
-            </div>
+    <div id="panel">
+        <h1>Танки: тест мультиплеера</h1>
+        <input type="text" id="nickname" placeholder="Ник" value="Игрок">
+        <button id="createRoom">Создать комнату</button>
+        <button id="autoJoin">Авто поиск</button>
+        <div>
+            <input type="text" id="roomCode" placeholder="Код комнаты">
+            <button id="joinRoom">Войти</button>
         </div>
-
-        <div id="roomPanel">
-            <button class="menu-btn" id="autoSearchBtn">Авто поиск</button>
-            <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="roomCodeInput" class="input-field" placeholder="Код комнаты">
-                <button class="menu-btn" id="joinRoomBtn" style="flex: 0 1 auto;">Войти</button>
-            </div>
-            <div class="status" id="roomStatus"></div>
-            <button class="menu-btn" id="backToMenuBtn">Назад</button>
-        </div>
-
-        <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
+        <div id="status"></div>
+        <div id="log"></div>
     </div>
+    <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
+
+    <script src="game.js"></script>
+    <script src="firebase.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
