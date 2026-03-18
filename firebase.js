@@ -4,8 +4,7 @@ const firebaseConfig = {
     projectId: "tanksduel-b90c7",
     storageBucket: "tanksduel-b90c7.firebasestorage.app",
     messagingSenderId: "952596856224",
-    appId: "1:952596856224:web:aefd98cf1d768e9169f8c5",
-    measurementId: "G-F5RZGHPC3Q"
+    appId: "1:952596856224:web:aefd98cf1d768e9169f8c5"
 };
 
 firebase.initializeApp(firebaseConfig);
@@ -40,6 +39,7 @@ async function createRoom(peerId) {
     currentUser.roomId = code;
     currentUser.isHost = true;
     currentUser.peerId = peerId;
+    console.log('✅ Комната создана', code, 'хост:', peerId);
     return code;
 }
 
@@ -49,7 +49,7 @@ async function joinRoom(code, peerId) {
     if (!room.exists) throw new Error('Комната не найдена');
     const data = room.data();
     if (data.status !== 'waiting' || data.players.length >= 2) {
-        throw new Error('Комната уже заполнена или игра началась');
+        throw new Error('Комната уже заполнена');
     }
     const updatedPlayers = [...data.players, {
         name: currentUser.name,
@@ -65,6 +65,7 @@ async function joinRoom(code, peerId) {
     currentUser.roomId = code;
     currentUser.isHost = false;
     currentUser.peerId = peerId;
+    console.log('✅ Подключился к комнате', code, 'клиент:', peerId);
     return data;
 }
 
@@ -110,7 +111,7 @@ function leaveRoom() {
     }
 }
 
-// ===== Игровые функции Firestore =====
+// ===== Игровые функции =====
 function getGameRoomRef() {
     if (!currentUser.roomId) return null;
     return db.collection('rooms').doc(currentUser.roomId);
@@ -119,7 +120,7 @@ function getGameRoomRef() {
 async function updateGameState(gameState) {
     const ref = getGameRoomRef();
     if (!ref) return;
-    console.log('🔥 Host обновляет gameState:', gameState);
+    console.log('🔥 Хост отправляет состояние:', gameState);
     await ref.update({
         gameState: gameState,
         lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
@@ -132,7 +133,7 @@ function listenGameState(callback) {
     return ref.onSnapshot((doc) => {
         const data = doc.data();
         if (data && data.gameState) {
-            console.log('📦 Клиент получил gameState:', data.gameState);
+            console.log('📦 Клиент получил состояние:', data.gameState);
             callback(data.gameState);
         }
     });
@@ -141,7 +142,7 @@ function listenGameState(callback) {
 async function sendPlayerInput(inputData) {
     const ref = getGameRoomRef();
     if (!ref) return;
-    console.log('📤 Клиент отправляет ввод:', inputData, 'от', currentUser.peerId);
+    console.log('📤 Клиент отправляет ввод:', inputData);
     await ref.update({
         [`playerInputs.${currentUser.peerId}`]: inputData
     });
@@ -153,7 +154,7 @@ function listenPlayerInputs(callback) {
     return ref.onSnapshot((doc) => {
         const data = doc.data();
         if (data && data.playerInputs) {
-            console.log('📥 Хост получил вводы игроков:', data.playerInputs);
+            console.log('📥 Хост получил вводы:', data.playerInputs);
             callback(data.playerInputs);
         }
     });
