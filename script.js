@@ -8,7 +8,7 @@ window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function startGame(roomData) {
-    console.log('startGame called', roomData);
+    console.log('🎮 startGame called', roomData);
     roomStatus.innerText = 'Игра начинается...';
     roomPanel.style.display = 'none';
     gameCanvas.classList.remove('hidden');
@@ -26,18 +26,19 @@ function startGame(roomData) {
     players = {};
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
-    console.log('Players initialized', players);
+    console.log('👥 Игроки инициализированы:', players);
     
-    // Отрисовываем сразу, чтобы не было пустого экрана
+    // Отрисовываем сразу
     draw();
     
     if (currentUser.isHost) {
-        console.log('I am host, starting game loop');
+        console.log('👑 Я хост, запускаю игровой цикл');
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
         
         if (playerInputsListener) playerInputsListener();
         playerInputsListener = listenPlayerInputs((inputs) => {
+            console.log('👑 Хост получил вводы:', inputs);
             for (let peerId in inputs) {
                 if (peerId !== currentUser.peerId) {
                     handleRemoteInput({
@@ -48,23 +49,27 @@ function startGame(roomData) {
             }
         });
     } else {
-        console.log('I am client, listening for game state');
+        console.log('💻 Я клиент, слушаю gameState');
         if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
-            console.log('Received game state', state);
+            console.log('💻 Клиент получил состояние:', state);
             applyGameState(state);
         });
         
         if (clientInputInterval) clearInterval(clientInputInterval);
         clientInputInterval = setInterval(() => {
             if (gameActive) {
-                sendPlayerInput({
+                const input = {
                     w: keys['KeyW'],
                     a: keys['KeyA'],
                     s: keys['KeyS'],
                     d: keys['KeyD'],
                     space: keys['Space']
-                });
+                };
+                // Отправляем только если есть нажатия (чтобы не спамить пустыми)
+                if (input.w || input.a || input.s || input.d || input.space) {
+                    sendPlayerInput(input);
+                }
             }
         }, 50);
     }
@@ -84,7 +89,6 @@ function updateGame() {
         mapId: currentMapId
     };
     updateGameState(gameState);
-    console.log('Host sending state', gameState);
     
     draw();
 }
@@ -103,6 +107,9 @@ function handleInput(playerId) {
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
+            console.log(`🚀 Хост движется: newX=${newX}, newY=${newY}`);
+        } else {
+            console.log('🧱 Хост упёрся в стену');
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -110,13 +117,18 @@ function handleInput(playerId) {
         if (!player.shootCooldown || Date.now() > player.shootCooldown) {
             shoot(player);
             player.shootCooldown = Date.now() + 500;
+            console.log('💥 Хост стреляет');
         }
     }
 }
 
 function handleRemoteInput(data) {
+    console.log('🎮 Применяю удалённый ввод для', data.peerId, data.keys);
     const player = players[data.peerId];
-    if (!player) return;
+    if (!player) {
+        console.warn('⚠️ Игрок не найден:', data.peerId);
+        return;
+    }
     let dx = 0, dy = 0;
     if (data.keys.w) dy = -player.speed;
     if (data.keys.s) dy = player.speed;
@@ -128,6 +140,9 @@ function handleRemoteInput(data) {
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
+            console.log(`🚀 Удалённый игрок движется: newX=${newX}, newY=${newY}`);
+        } else {
+            console.log('🧱 Удалённый игрок упёрся в стену');
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -135,6 +150,7 @@ function handleRemoteInput(data) {
         if (!player.shootCooldown || Date.now() > player.shootCooldown) {
             shoot(player);
             player.shootCooldown = Date.now() + 500;
+            console.log('💥 Удалённый игрок стреляет');
         }
     }
 }
@@ -150,7 +166,6 @@ function applyGameState(state) {
 
 function draw() {
     if (!gameActive) return;
-    console.log('Drawing, players:', players);
     ctx.clearRect(0, 0, 800, 600);
     // Карта
     for (let row = 0; row < MAP_HEIGHT; row++) {
