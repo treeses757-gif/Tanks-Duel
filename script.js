@@ -1,14 +1,11 @@
 // script.js
-// Глобальные переменные для Peer и игры
 let peer;
 let conn;
 let keys = {};
 
-// Управление клавишами
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
-// Инициализация Peer
 function initPeer() {
     return new Promise((resolve, reject) => {
         if (peer) {
@@ -22,6 +19,7 @@ function initPeer() {
         });
         peer.on('error', (err) => {
             console.error('PeerJS ошибка:', err);
+            setIndicator('error');
             reject(err);
         });
         peer.on('connection', (c) => {
@@ -41,9 +39,12 @@ function setupConnection() {
             applyGameState(data.state);
         }
     });
+    conn.on('close', () => {
+        console.log('Соединение закрыто');
+        setIndicator('idle');
+    });
 }
 
-// Игровые функции (они используют глобальные переменные из game.js)
 function startGame(roomData) {
     roomStatus.innerText = 'Игра начинается...';
     roomPanel.style.display = 'none';
@@ -204,7 +205,6 @@ function draw() {
     });
 }
 
-// Отправка ввода на хост (для не-хоста)
 setInterval(() => {
     if (gameActive && !currentUser.isHost && conn && conn.open) {
         conn.send({
