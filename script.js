@@ -9,8 +9,44 @@ let gameStateListener = null;
 let playerInputsListener = null;
 let clientInputInterval = null;
 
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup', e => keys[e.code] = false);
+// Поддержка мобильных кнопок
+document.querySelectorAll('.ctrl-btn').forEach(btn => {
+    btn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        const key = btn.dataset.key;
+        keys['Key' + key.toUpperCase()] = true;
+        console.log(`Кнопка ${key} нажата (touch)`);
+    });
+    btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        const key = btn.dataset.key;
+        keys['Key' + key.toUpperCase()] = false;
+        console.log(`Кнопка ${key} отпущена (touch)`);
+    });
+    // Для мыши (на случай теста на ПК)
+    btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        const key = btn.dataset.key;
+        keys['Key' + key.toUpperCase()] = true;
+        console.log(`Кнопка ${key} нажата (mouse)`);
+    });
+    btn.addEventListener('mouseup', (e) => {
+        e.preventDefault();
+        const key = btn.dataset.key;
+        keys['Key' + key.toUpperCase()] = false;
+        console.log(`Кнопка ${key} отпущена (mouse)`);
+    });
+});
+
+// Клавиатура (для ПК)
+window.addEventListener('keydown', e => {
+    keys[e.code] = true;
+    console.log(`Key down: ${e.code}`);
+});
+window.addEventListener('keyup', e => {
+    keys[e.code] = false;
+    console.log(`Key up: ${e.code}`);
+});
 
 function log(msg) {
     console.log(msg);
@@ -60,15 +96,16 @@ function startGame(roomData) {
         clientInputInterval = setInterval(() => {
             if (gameActive) {
                 const input = {
-                    w: keys['KeyW'],
-                    a: keys['KeyA'],
-                    s: keys['KeyS'],
-                    d: keys['KeyD'],
-                    space: false // пока без стрельбы
+                    w: keys['KeyW'] || false,
+                    a: keys['KeyA'] || false,
+                    s: keys['KeyS'] || false,
+                    d: keys['KeyD'] || false,
+                    space: false
                 };
-                // Отправляем только если есть нажатия
+                // Отправляем всегда, даже если нет нажатий (для отладки)
+                sendPlayerInput(input);
                 if (input.w || input.a || input.s || input.d) {
-                    sendPlayerInput(input);
+                    log('📤 Клиент отправляет ввод: ' + JSON.stringify(input));
                 }
             }
         }, 50);
@@ -103,6 +140,7 @@ function handleInput(playerId) {
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
+            log(`🚀 Хост движется: x=${player.x}, y=${player.y}`);
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -122,6 +160,7 @@ function handleRemoteInput(data) {
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
+            log(`🚀 Удалённый игрок движется: x=${player.x}, y=${player.y}`);
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -166,7 +205,7 @@ function draw() {
     }
 }
 
-// --- Инициализация UI (копия из ui.js, но упрощённая) ---
+// --- Инициализация UI ---
 document.getElementById('createRoom').onclick = async () => {
     const nick = document.getElementById('nickname').value.trim() || 'Anon';
     currentUser.name = nick;
