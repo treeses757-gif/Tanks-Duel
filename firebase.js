@@ -1,4 +1,3 @@
-// firebase.js
 const firebaseConfig = {
     apiKey: "AIzaSyC-iLxizH1umfeHSUZHLvpAt6XNm21p90Y",
     authDomain: "tanksduel-b90c7.firebaseapp.com",
