@@ -119,6 +119,7 @@ function getGameRoomRef() {
 async function updateGameState(gameState) {
     const ref = getGameRoomRef();
     if (!ref) return;
+    console.log('🔥 Host обновляет gameState:', gameState);
     await ref.update({
         gameState: gameState,
         lastUpdate: firebase.firestore.FieldValue.serverTimestamp()
@@ -131,6 +132,7 @@ function listenGameState(callback) {
     return ref.onSnapshot((doc) => {
         const data = doc.data();
         if (data && data.gameState) {
+            console.log('📦 Клиент получил gameState:', data.gameState);
             callback(data.gameState);
         }
     });
@@ -139,6 +141,7 @@ function listenGameState(callback) {
 async function sendPlayerInput(inputData) {
     const ref = getGameRoomRef();
     if (!ref) return;
+    console.log('📤 Клиент отправляет ввод:', inputData, 'от', currentUser.peerId);
     await ref.update({
         [`playerInputs.${currentUser.peerId}`]: inputData
     });
@@ -150,6 +153,7 @@ function listenPlayerInputs(callback) {
     return ref.onSnapshot((doc) => {
         const data = doc.data();
         if (data && data.playerInputs) {
+            console.log('📥 Хост получил вводы игроков:', data.playerInputs);
             callback(data.playerInputs);
         }
     });
