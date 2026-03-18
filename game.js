@@ -1,4 +1,3 @@
-// game.js
 const TILE_SIZE = 40;
 const MAP_WIDTH = 20;
 const MAP_HEIGHT = 15;
