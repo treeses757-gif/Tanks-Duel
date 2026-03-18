@@ -66,11 +66,7 @@ function startGame(roomData) {
                     d: keys['KeyD'],
                     space: keys['Space']
                 };
-                // Отправляем только если есть нажатия (чтобы не спамить пустыми)
-                if (input.w || input.a || input.s || input.d || input.space) {
-                    console.log('📤 Клиент отправляет ввод:', input);
-                    sendPlayerInput(input);
-                }
+                sendPlayerInput(input); // отправляем всегда
             }
         }, 50);
     }
@@ -105,13 +101,9 @@ function handleInput(playerId) {
     if (dx !== 0 || dy !== 0) {
         const newX = player.x + dx;
         const newY = player.y + dy;
-        console.log(`🚀 Хост пробует движение: текущие (${player.x},${player.y}) -> новые (${newX},${newY})`);
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
-            console.log(`✅ Хост движется: новые координаты (${player.x},${player.y})`);
-        } else {
-            console.log('🧱 Хост упёрся в стену');
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -119,19 +111,13 @@ function handleInput(playerId) {
         if (!player.shootCooldown || Date.now() > player.shootCooldown) {
             shoot(player);
             player.shootCooldown = Date.now() + 500;
-            console.log('💥 Хост стреляет');
         }
     }
 }
 
 function handleRemoteInput(data) {
-    console.log('🎮 Применяю удалённый ввод для', data.peerId, data.keys);
     const player = players[data.peerId];
-    if (!player) {
-        console.warn('⚠️ Игрок не найден:', data.peerId);
-        return;
-    }
-    console.log(`Танк ${data.peerId} сейчас x=${player.x}, y=${player.y}`);
+    if (!player) return;
     let dx = 0, dy = 0;
     if (data.keys.w) dy = -player.speed;
     if (data.keys.s) dy = player.speed;
@@ -140,15 +126,9 @@ function handleRemoteInput(data) {
     if (dx !== 0 || dy !== 0) {
         const newX = player.x + dx;
         const newY = player.y + dy;
-        console.log(`🚀 Удалённый игрок пробует движение: новые (${newX},${newY})`);
-        // ВРЕМЕННО: раскомментируйте следующую строку, чтобы принудительно двигать без проверки стен
-        // player.x = newX; player.y = newY; console.log('⚠️ Принудительное движение без проверки!');
         if (canMove(newX, newY)) {
             player.x = newX;
             player.y = newY;
-            console.log(`✅ Удалённый игрок движется: новые координаты (${player.x},${player.y})`);
-        } else {
-            console.log('🧱 Удалённый игрок упёрся в стену');
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
@@ -156,13 +136,11 @@ function handleRemoteInput(data) {
         if (!player.shootCooldown || Date.now() > player.shootCooldown) {
             shoot(player);
             player.shootCooldown = Date.now() + 500;
-            console.log('💥 Удалённый игрок стреляет');
         }
     }
 }
 
 function applyGameState(state) {
-    console.log('📦 applyGameState: получено состояние', state);
     players = state.players;
     projectiles = state.projectiles;
     bonuses = state.bonuses;
