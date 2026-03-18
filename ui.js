@@ -19,10 +19,8 @@ const indicator = document.getElementById('connectionIndicator');
 function setIndicator(state) {
     indicator.className = 'indicator ' + state;
 }
-
 setIndicator('idle');
 
-// Генерация случайного peerId (заменяет PeerJS)
 function generatePeerId() {
     return 'player_' + Math.random().toString(36).substr(2, 9);
 }
@@ -52,7 +50,7 @@ createRoomBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
         setIndicator('connecting');
-        const peerId = generatePeerId(); // вместо initPeer
+        const peerId = generatePeerId();
         const code = await createRoom(peerId);
         roomStatus.innerText = `Комната создана. Код: ${code}. Ожидание игрока...`;
         listenRoom(code, {
