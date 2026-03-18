@@ -14,6 +14,15 @@ const backToMenuBtn = document.getElementById('backToMenuBtn');
 const shopBtn = document.getElementById('shopBtn');
 const tanksBtn = document.getElementById('tanksBtn');
 const friendsBtn = document.getElementById('friendsBtn');
+const indicator = document.getElementById('connectionIndicator');
+
+// Функция обновления индикатора
+function setIndicator(state) {
+    indicator.className = 'indicator ' + state;
+}
+
+// Начальное состояние
+setIndicator('idle');
 
 playBtn.addEventListener('click', () => {
     const nick = nicknameInput.value.trim();
@@ -24,6 +33,7 @@ playBtn.addEventListener('click', () => {
     currentUser.name = nick;
     menuDiv.style.display = 'none';
     roomPanel.style.display = 'flex';
+    setIndicator('connecting'); // начали подключение
 });
 
 backToMenuBtn.addEventListener('click', () => {
@@ -32,39 +42,56 @@ backToMenuBtn.addEventListener('click', () => {
     menuDiv.style.display = 'flex';
     gameCanvas.classList.add('hidden');
     roomStatus.innerText = '';
+    setIndicator('idle');
 });
 
 createRoomBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
+        setIndicator('connecting');
         const peerId = await initPeer();
         const code = await createRoom(peerId);
         roomStatus.innerText = `Комната создана. Код: ${code}. Ожидание игрока...`;
         listenRoom(code, {
-            onGameStart: (data) => startGame(data),
+            onGameStart: (data) => {
+                setIndicator('connected');
+                startGame(data);
+            },
             onWaiting: (data) => {},
-            onClosed: () => leaveRoom()
+            onClosed: () => {
+                setIndicator('idle');
+                leaveRoom();
+            }
         });
     } catch (e) {
         console.error(e);
         roomStatus.innerText = 'Ошибка создания комнаты';
+        setIndicator('error');
     }
 });
 
 autoSearchBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
+        setIndicator('connecting');
         const peerId = await initPeer();
         const code = await autoSearch(peerId);
         roomStatus.innerText = `Подключение к комнате ${code}...`;
         listenRoom(code, {
-            onGameStart: (data) => startGame(data),
+            onGameStart: (data) => {
+                setIndicator('connected');
+                startGame(data);
+            },
             onWaiting: (data) => roomStatus.innerText = `Ожидание игрока... Код: ${code}`,
-            onClosed: () => leaveRoom()
+            onClosed: () => {
+                setIndicator('idle');
+                leaveRoom();
+            }
         });
     } catch (e) {
         console.error(e);
         roomStatus.innerText = 'Ошибка поиска';
+        setIndicator('error');
     }
 });
 
@@ -73,16 +100,24 @@ joinRoomBtn.addEventListener('click', async () => {
     if (!code) return;
     if (!currentUser.name) return;
     try {
+        setIndicator('connecting');
         const peerId = await initPeer();
         await joinRoom(code, peerId);
         roomStatus.innerText = `Подключение к комнате ${code}...`;
         listenRoom(code, {
-            onGameStart: (data) => startGame(data),
+            onGameStart: (data) => {
+                setIndicator('connected');
+                startGame(data);
+            },
             onWaiting: (data) => roomStatus.innerText = `Ожидание игрока... Код: ${code}`,
-            onClosed: () => leaveRoom()
+            onClosed: () => {
+                setIndicator('idle');
+                leaveRoom();
+            }
         });
     } catch (e) {
         roomStatus.innerText = e.message;
+        setIndicator('error');
     }
 });
 
