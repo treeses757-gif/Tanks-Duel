@@ -13,6 +13,11 @@ function startGame(roomData) {
     roomPanel.style.display = 'none';
     gameCanvas.classList.remove('hidden');
     gameActive = true;
+    
+    if (roomData.mapId === undefined) {
+        console.error('mapId is undefined, using default 0');
+        roomData.mapId = 0;
+    }
     currentMapId = roomData.mapId;
     loadMap(currentMapId);
     
@@ -22,6 +27,9 @@ function startGame(roomData) {
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
     console.log('Players initialized', players);
+    
+    // Отрисовываем сразу, чтобы не было пустого экрана
+    draw();
     
     if (currentUser.isHost) {
         console.log('I am host, starting game loop');
