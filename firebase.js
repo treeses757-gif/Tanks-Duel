@@ -1,5 +1,4 @@
 // firebase.js
-// Твой конфиг Firebase
 const firebaseConfig = {
     apiKey: "AIzaSyC-iLxizH1umfeHSUZHLvpAt6XNm21p90Y",
     authDomain: "tanksduel-b90c7.firebaseapp.com",
@@ -13,7 +12,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// Переменные для текущей комнаты
 let currentUser = {
     name: '',
     peerId: null,
@@ -22,18 +20,16 @@ let currentUser = {
 };
 let roomListener = null;
 
-// Функции для работы с комнатами
-async function createRoom() {
+async function createRoom(peerId) {
     const code = Math.floor(1000 + Math.random() * 9000).toString();
     const roomRef = db.collection('rooms').doc(code);
     const room = await roomRef.get();
-    if (room.exists) return createRoom();
+    if (room.exists) return createRoom(peerId);
     
-    await initPeer();
     const roomData = {
         players: [{
             name: currentUser.name,
-            peerId: peer.id,
+            peerId: peerId,
             tank: 0
         }],
         status: 'waiting',
@@ -42,10 +38,11 @@ async function createRoom() {
     await roomRef.set(roomData);
     currentUser.roomId = code;
     currentUser.isHost = true;
+    currentUser.peerId = peerId;
     return code;
 }
 
-async function joinRoom(code) {
+async function joinRoom(code, peerId) {
     const roomRef = db.collection('rooms').doc(code);
     const room = await roomRef.get();
     if (!room.exists) throw new Error('Комната не найдена');
@@ -53,10 +50,9 @@ async function joinRoom(code) {
     if (data.status !== 'waiting' || data.players.length >= 2) {
         throw new Error('Комната уже заполнена или игра началась');
     }
-    await initPeer();
     const updatedPlayers = [...data.players, {
         name: currentUser.name,
-        peerId: peer.id,
+        peerId: peerId,
         tank: 0
     }];
     await roomRef.update({
@@ -65,22 +61,22 @@ async function joinRoom(code) {
     });
     currentUser.roomId = code;
     currentUser.isHost = false;
+    currentUser.peerId = peerId;
     return data;
 }
 
-async function autoSearch() {
+async function autoSearch(peerId) {
     const snapshot = await db.collection('rooms')
         .where('status', '==', 'waiting')
         .get();
     for (const doc of snapshot.docs) {
         const data = doc.data();
         if (data.players.length === 1) {
-            await joinRoom(doc.id);
+            await joinRoom(doc.id, peerId);
             return doc.id;
         }
     }
-    // Если нет свободных, создаём новую
-    return await createRoom();
+    return await createRoom(peerId);
 }
 
 function listenRoom(roomId, callbacks) {

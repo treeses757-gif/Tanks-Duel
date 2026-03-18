@@ -1,5 +1,5 @@
 // script.js
-// Глобальные переменные для Peer
+// Глобальные переменные для Peer и игры
 let peer;
 let conn;
 let keys = {};
@@ -10,15 +10,19 @@ window.addEventListener('keyup', e => keys[e.code] = false);
 
 // Инициализация Peer
 function initPeer() {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         if (peer) {
-            resolve();
+            resolve(peer.id);
             return;
         }
         peer = new Peer();
         peer.on('open', (id) => {
-            currentUser.peerId = id;
-            resolve();
+            console.log('PeerJS: открыт с id', id);
+            resolve(id);
+        });
+        peer.on('error', (err) => {
+            console.error('PeerJS ошибка:', err);
+            reject(err);
         });
         peer.on('connection', (c) => {
             conn = c;
@@ -39,7 +43,7 @@ function setupConnection() {
     });
 }
 
-// Старт игры
+// Игровые функции (они используют глобальные переменные из game.js)
 function startGame(roomData) {
     roomStatus.innerText = 'Игра начинается...';
     roomPanel.style.display = 'none';
@@ -63,7 +67,6 @@ function startGame(roomData) {
     }
 }
 
-// Игровой цикл (только для хоста)
 function updateGame() {
     if (!gameActive) return;
     if (currentUser.isHost) {
@@ -85,7 +88,6 @@ function updateGame() {
     draw();
 }
 
-// Обработка ввода локального игрока
 function handleInput(playerId) {
     const player = players[playerId];
     if (!player) return;
@@ -111,7 +113,6 @@ function handleInput(playerId) {
     }
 }
 
-// Обработка ввода удалённого игрока (хостом)
 function handleRemoteInput(data) {
     const player = players[data.peerId];
     if (!player) return;
@@ -137,7 +138,6 @@ function handleRemoteInput(data) {
     }
 }
 
-// Применить состояние от хоста (для не-хоста)
 function applyGameState(state) {
     players = state.players;
     projectiles = state.projectiles;
@@ -147,7 +147,6 @@ function applyGameState(state) {
     draw();
 }
 
-// Отрисовка
 function draw() {
     ctx.clearRect(0, 0, 800, 600);
     // Карта
