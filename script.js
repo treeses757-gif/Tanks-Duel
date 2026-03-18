@@ -1,3 +1,8 @@
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+const statusDiv = document.getElementById('status');
+const logDiv = document.getElementById('log');
+
 let keys = {};
 let gameInterval = null;
 let gameStateListener = null;
@@ -7,14 +12,19 @@ let clientInputInterval = null;
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
+function log(msg) {
+    console.log(msg);
+    logDiv.innerText += msg + '\n';
+    logDiv.scrollTop = logDiv.scrollHeight;
+}
+
 function startGame(roomData) {
-    console.log('🎮 startGame вызван, данные комнаты:', roomData);
-    roomStatus.innerText = 'Игра начинается...';
-    roomPanel.style.display = 'none';
-    gameCanvas.classList.remove('hidden');
+    log('🎮 Игра начинается... Роль: ' + (currentUser.isHost ? 'ХОСТ' : 'КЛИЕНТ'));
+    document.getElementById('panel').style.display = 'none';
+    canvas.style.display = 'block';
     gameActive = true;
     
-    currentMapId = roomData.mapId;
+    currentMapId = roomData.mapId || 0;
     loadMap(currentMapId);
     
     const p1 = roomData.players[0];
@@ -22,19 +32,15 @@ function startGame(roomData) {
     players = {};
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
-    console.log('👥 Игроки созданы:', players);
+    log('👥 Игроки: ' + Object.keys(players).join(', '));
     
-    // Обязательно рисуем первый кадр
     draw();
     
     if (currentUser.isHost) {
-        console.log('👑 Роль: ХОСТ, peerId =', currentUser.peerId);
-        if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
         
-        if (playerInputsListener) playerInputsListener();
         playerInputsListener = listenPlayerInputs((inputs) => {
-            console.log('👑 Получены вводы от клиентов:', inputs);
+            log('📥 Хост получил вводы: ' + JSON.stringify(inputs));
             for (let peerId in inputs) {
                 if (peerId !== currentUser.peerId) {
                     handleRemoteInput({
@@ -45,15 +51,12 @@ function startGame(roomData) {
             }
         });
     } else {
-        console.log('💻 Роль: КЛИЕНТ, peerId =', currentUser.peerId);
-        if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
-            console.log('💻 Получено состояние от хоста:', state);
+            log('📦 Клиент получил состояние: ' + JSON.stringify(state).substring(0, 100));
             applyGameState(state);
-            draw(); // дополнительная перерисовка для надёжности
+            draw();
         });
         
-        if (clientInputInterval) clearInterval(clientInputInterval);
         clientInputInterval = setInterval(() => {
             if (gameActive) {
                 const input = {
@@ -61,10 +64,12 @@ function startGame(roomData) {
                     a: keys['KeyA'],
                     s: keys['KeyS'],
                     d: keys['KeyD'],
-                    space: keys['Space']
+                    space: false // пока без стрельбы
                 };
-                // Отправляем всегда, даже если все false (для отладки)
-                sendPlayerInput(input);
+                // Отправляем только если есть нажатия
+                if (input.w || input.a || input.s || input.d) {
+                    sendPlayerInput(input);
+                }
             }
         }, 50);
     }
@@ -74,13 +79,9 @@ function updateGame() {
     if (!gameActive || !currentUser.isHost) return;
     
     handleInput(currentUser.peerId);
-    updateProjectiles();
-    spawnBonuses();
     
     const gameState = {
         players: players,
-        projectiles: projectiles,
-        bonuses: bonuses,
         mapId: currentMapId
     };
     updateGameState(gameState);
@@ -105,20 +106,11 @@ function handleInput(playerId) {
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
-    if (keys['Space']) {
-        if (!player.shootCooldown || Date.now() > player.shootCooldown) {
-            shoot(player);
-            player.shootCooldown = Date.now() + 500;
-        }
-    }
 }
 
 function handleRemoteInput(data) {
     const player = players[data.peerId];
-    if (!player) {
-        console.warn('⚠️ Получен ввод для неизвестного игрока', data.peerId);
-        return;
-    }
+    if (!player) return;
     let dx = 0, dy = 0;
     if (data.keys.w) dy = -player.speed;
     if (data.keys.s) dy = player.speed;
@@ -133,27 +125,16 @@ function handleRemoteInput(data) {
         }
         player.angle = Math.atan2(dy, dx) * 180 / Math.PI;
     }
-    if (data.keys.space) {
-        if (!player.shootCooldown || Date.now() > player.shootCooldown) {
-            shoot(player);
-            player.shootCooldown = Date.now() + 500;
-        }
-    }
 }
 
 function applyGameState(state) {
     players = state.players;
-    projectiles = state.projectiles;
-    bonuses = state.bonuses;
-    currentMapId = state.mapId;
-    loadMap(currentMapId);
-    // Отрисовка будет вызвана после получения состояния в listenGameState
 }
 
 function draw() {
     if (!gameActive) return;
     ctx.clearRect(0, 0, 800, 600);
-    // Отрисовка карты
+    // Карта
     for (let row = 0; row < MAP_HEIGHT; row++) {
         for (let col = 0; col < MAP_WIDTH; col++) {
             if (map[row][col] === 1) {
@@ -167,13 +148,6 @@ function draw() {
             }
         }
     }
-    // Бонусы
-    bonuses.forEach(b => {
-        ctx.fillStyle = b.type === 'speed' ? '#ffaa00' : '#00aaff';
-        ctx.beginPath();
-        ctx.arc(b.x + TILE_SIZE/2, b.y + TILE_SIZE/2, 15, 0, 2*Math.PI);
-        ctx.fill();
-    });
     // Танки
     for (let id in players) {
         const p = players[id];
@@ -189,21 +163,53 @@ function draw() {
         ctx.fillStyle = '#fff';
         ctx.fillRect(15, -5, 20, 10);
         ctx.restore();
-        ctx.fillStyle = '#0f0';
-        ctx.fillRect(p.x, p.y-10, 40 * (p.health/100), 5);
-        if (p.shield) {
-            ctx.strokeStyle = '#00f';
-            ctx.lineWidth = 3;
-            ctx.beginPath();
-            ctx.arc(p.x + TILE_SIZE/2, p.y + TILE_SIZE/2, 25, 0, 2*Math.PI);
-            ctx.stroke();
-        }
     }
-    // Снаряды
-    ctx.fillStyle = '#ff0';
-    projectiles.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 5, 0, 2*Math.PI);
-        ctx.fill();
-    });
 }
+
+// --- Инициализация UI (копия из ui.js, но упрощённая) ---
+document.getElementById('createRoom').onclick = async () => {
+    const nick = document.getElementById('nickname').value.trim() || 'Anon';
+    currentUser.name = nick;
+    try {
+        const peerId = 'player_' + Math.random().toString(36).substr(2, 9);
+        const code = await createRoom(peerId);
+        statusDiv.innerText = 'Комната создана. Код: ' + code;
+        listenRoom(code, {
+            onGameStart: (data) => startGame(data),
+            onWaiting: () => log('Ожидание второго игрока...'),
+            onClosed: () => log('Комната закрыта')
+        });
+    } catch (e) { log('Ошибка: ' + e.message); }
+};
+
+document.getElementById('autoJoin').onclick = async () => {
+    const nick = document.getElementById('nickname').value.trim() || 'Anon';
+    currentUser.name = nick;
+    try {
+        const peerId = 'player_' + Math.random().toString(36).substr(2, 9);
+        const code = await autoSearch(peerId);
+        statusDiv.innerText = 'Подключение к комнате ' + code;
+        listenRoom(code, {
+            onGameStart: (data) => startGame(data),
+            onWaiting: () => log('Ожидание второго игрока...'),
+            onClosed: () => log('Комната закрыта')
+        });
+    } catch (e) { log('Ошибка: ' + e.message); }
+};
+
+document.getElementById('joinRoom').onclick = async () => {
+    const nick = document.getElementById('nickname').value.trim() || 'Anon';
+    const code = document.getElementById('roomCode').value.trim().toUpperCase();
+    if (!code) return;
+    currentUser.name = nick;
+    try {
+        const peerId = 'player_' + Math.random().toString(36).substr(2, 9);
+        await joinRoom(code, peerId);
+        statusDiv.innerText = 'Подключение к комнате ' + code;
+        listenRoom(code, {
+            onGameStart: (data) => startGame(data),
+            onWaiting: () => log('Ожидание второго игрока...'),
+            onClosed: () => log('Комната закрыта')
+        });
+    } catch (e) { log('Ошибка: ' + e.message); }
+};
