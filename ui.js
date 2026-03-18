@@ -16,12 +16,12 @@ const tanksBtn = document.getElementById('tanksBtn');
 const friendsBtn = document.getElementById('friendsBtn');
 const indicator = document.getElementById('connectionIndicator');
 
-// Функция обновления индикатора
 function setIndicator(state) {
-    indicator.className = 'indicator ' + state;
+    if (indicator) {
+        indicator.className = 'indicator ' + state;
+    }
 }
 
-// Начальное состояние
 setIndicator('idle');
 
 playBtn.addEventListener('click', () => {
@@ -33,7 +33,7 @@ playBtn.addEventListener('click', () => {
     currentUser.name = nick;
     menuDiv.style.display = 'none';
     roomPanel.style.display = 'flex';
-    setIndicator('connecting'); // начали подключение
+    setIndicator('connecting');
 });
 
 backToMenuBtn.addEventListener('click', () => {
