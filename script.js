@@ -1,4 +1,3 @@
-// script.js
 let keys = {};
 let gameInterval = null;
 let gameStateListener = null;
