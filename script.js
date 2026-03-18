@@ -23,9 +23,11 @@ function startGame(roomData) {
     
     if (currentUser.isHost) {
         // Хост: запускаем игровой цикл и слушаем ввод от клиента
+        if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
+        
+        if (playerInputsListener) playerInputsListener();
         playerInputsListener = listenPlayerInputs((inputs) => {
-            // Применяем ввод от другого игрока (если есть)
             for (let peerId in inputs) {
                 if (peerId !== currentUser.peerId) {
                     handleRemoteInput({
@@ -37,10 +39,12 @@ function startGame(roomData) {
         });
     } else {
         // Клиент: слушаем состояние игры и отправляем свой ввод
+        if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
             applyGameState(state);
         });
-        // Запускаем отправку ввода (каждые 50 мс)
+        
+        // Отправляем ввод каждые 50 мс
         setInterval(() => {
             if (gameActive) {
                 sendPlayerInput({
@@ -58,14 +62,10 @@ function startGame(roomData) {
 function updateGame() {
     if (!gameActive || !currentUser.isHost) return;
     
-    // Обрабатываем ввод хоста
     handleInput(currentUser.peerId);
-    
-    // Обновляем снаряды и бонусы
     updateProjectiles();
     spawnBonuses();
     
-    // Отправляем состояние в Firestore
     updateGameState({
         players: players,
         projectiles: projectiles,
