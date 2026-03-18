@@ -146,7 +146,9 @@ body {
         height: calc(95vw * 0.75);
         max-width: 800px;
         max-height: 600px;
-        /* Индикатор соединения */
+    }
+}
+/* Индикатор соединения */
 .indicator {
     position: fixed;
     top: 20px;
@@ -163,5 +165,3 @@ body {
 .indicator.connected { background-color: limegreen; box-shadow: 0 0 15px limegreen; }
 .indicator.error { background-color: red; box-shadow: 0 0 15px red; }
 .indicator.idle { background-color: gray; box-shadow: 0 0 10px gray; }
-    }
-}
