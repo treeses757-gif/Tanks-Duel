@@ -2,34 +2,38 @@
 let peer;
 let conn;
 let keys = {};
+let peerOpenPromise = null; // для ожидания открытия Peer
 
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function initPeer() {
-    return new Promise((resolve, reject) => {
-        if (peer) {
+    if (peerOpenPromise) return peerOpenPromise;
+    peerOpenPromise = new Promise((resolve, reject) => {
+        if (peer && peer.id) {
             resolve(peer.id);
             return;
         }
         peer = new Peer();
         peer.on('open', (id) => {
             console.log('PeerJS: открыт с id', id);
+            setIndicator('connected');
             resolve(id);
         });
         peer.on('error', (err) => {
             console.error('PeerJS ошибка:', err);
-            if (typeof setIndicator === 'function') setIndicator('error');
+            setIndicator('error');
             reject(err);
         });
-        peer.on('connection', (c) => {
-            conn = c;
-            setupConnection();
-        });
     });
+    return peerOpenPromise;
 }
 
 function setupConnection() {
+    conn.on('open', () => {
+        console.log('Соединение установлено');
+        setIndicator('connected');
+    });
     conn.on('data', (data) => {
         if (data.type === 'input') {
             if (currentUser.isHost) {
@@ -41,7 +45,7 @@ function setupConnection() {
     });
     conn.on('close', () => {
         console.log('Соединение закрыто');
-        if (typeof setIndicator === 'function') setIndicator('idle');
+        setIndicator('idle');
     });
 }
 
@@ -150,6 +154,7 @@ function applyGameState(state) {
 
 function draw() {
     ctx.clearRect(0, 0, 800, 600);
+    // Карта
     for (let row = 0; row < MAP_HEIGHT; row++) {
         for (let col = 0; col < MAP_WIDTH; col++) {
             if (map[row][col] === 1) {
@@ -163,12 +168,14 @@ function draw() {
             }
         }
     }
+    // Бонусы
     bonuses.forEach(b => {
         ctx.fillStyle = b.type === 'speed' ? '#ffaa00' : '#00aaff';
         ctx.beginPath();
         ctx.arc(b.x + TILE_SIZE/2, b.y + TILE_SIZE/2, 15, 0, 2*Math.PI);
         ctx.fill();
     });
+    // Танки
     for (let id in players) {
         const p = players[id];
         ctx.save();
@@ -193,6 +200,7 @@ function draw() {
             ctx.stroke();
         }
     }
+    // Снаряды
     ctx.fillStyle = '#ff0';
     projectiles.forEach(p => {
         ctx.beginPath();
