@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanks Duel</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Библиотеки: Firebase только -->
+    <!-- Только Firebase, PeerJS больше не нужен -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <!-- Наши скрипты (порядок важен) -->
@@ -16,11 +16,9 @@
 </head>
 <body>
     <div class="animated-bg"></div>
-    <!-- Индикатор соединения -->
     <div id="connectionIndicator" class="indicator" title="Статус соединения"></div>
     
     <div id="gameContainer">
-        <!-- Меню -->
         <div id="menu">
             <div class="menu-header">
                 <h1>ТАНКИ ДУЭЛЬ</h1>
@@ -41,7 +39,6 @@
             </div>
         </div>
 
-        <!-- Панель комнат (отдельно) -->
         <div id="roomPanel">
             <button class="menu-btn" id="autoSearchBtn">Авто поиск</button>
             <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
@@ -53,7 +50,6 @@
             <button class="menu-btn" id="backToMenuBtn">Назад</button>
         </div>
 
-        <!-- Холст для игры -->
         <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
     </div>
 </body>
