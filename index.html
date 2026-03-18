@@ -19,8 +19,9 @@
     <div class="animated-bg"></div>
     <!-- Индикатор соединения -->
     <div id="connectionIndicator" class="indicator" title="Статус соединения"></div>
+    
     <div id="gameContainer">
-        <!-- Меню -->
+        <!-- Меню (главный экран) -->
         <div id="menu">
             <div class="menu-header">
                 <h1>ТАНКИ ДУЭЛЬ</h1>
@@ -39,18 +40,20 @@
                 <button class="menu-btn" id="friendsBtn" disabled>Друзья</button>
                 <button class="menu-btn" id="playBtn">Играть</button>
             </div>
-            <!-- Панель комнат -->
-            <div id="roomPanel">
-                <button class="menu-btn" id="autoSearchBtn">Авто поиск</button>
-                <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="roomCodeInput" class="input-field" placeholder="Код комнаты">
-                    <button class="menu-btn" id="joinRoomBtn" style="flex: 0 1 auto;">Войти</button>
-                </div>
-                <div class="status" id="roomStatus"></div>
-                <button class="menu-btn" id="backToMenuBtn">Назад</button>
-            </div>
         </div>
+
+        <!-- Панель комнат (отдельно от меню) -->
+        <div id="roomPanel">
+            <button class="menu-btn" id="autoSearchBtn">Авто поиск</button>
+            <button class="menu-btn" id="createRoomBtn">Создать комнату</button>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="roomCodeInput" class="input-field" placeholder="Код комнаты">
+                <button class="menu-btn" id="joinRoomBtn" style="flex: 0 1 auto;">Войти</button>
+            </div>
+            <div class="status" id="roomStatus"></div>
+            <button class="menu-btn" id="backToMenuBtn">Назад</button>
+        </div>
+
         <!-- Холст для игры -->
         <canvas id="gameCanvas" width="800" height="600" class="hidden"></canvas>
     </div>
