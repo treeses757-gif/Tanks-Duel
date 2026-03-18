@@ -22,7 +22,6 @@ function startGame(roomData) {
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
     
     if (currentUser.isHost) {
-        // Хост: запускаем игровой цикл и слушаем ввод от клиента
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
         
@@ -38,13 +37,11 @@ function startGame(roomData) {
             }
         });
     } else {
-        // Клиент: слушаем состояние игры и отправляем свой ввод
         if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
             applyGameState(state);
         });
         
-        // Отправляем ввод каждые 50 мс
         setInterval(() => {
             if (gameActive) {
                 sendPlayerInput({
