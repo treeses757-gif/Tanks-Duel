@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanks Duel</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Только Firebase, PeerJS больше не нужен -->
+    <!-- Только Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- Наши скрипты (порядок важен) -->
+    <!-- Наши скрипты -->
     <script src="firebase.js" defer></script>
     <script src="game.js" defer></script>
     <script src="script.js" defer></script>
@@ -22,7 +22,7 @@
         <div id="menu">
             <div class="menu-header">
                 <h1>ТАНКИ ДУЭЛЬ</h1>
-                <div class="tank-preview" id="tankPreview">
+                <div class="tank-preview">
                     <svg viewBox="0 0 100 100">
                         <rect x="30" y="40" width="40" height="30" rx="5" fill="#e94560"/>
                         <circle cx="50" cy="55" r="12" fill="#16213e"/>
