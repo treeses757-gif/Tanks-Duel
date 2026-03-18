@@ -9,14 +9,16 @@
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <!-- Наши скрипты (важен порядок) -->
+    <!-- Наши скрипты -->
     <script src="firebase.js" defer></script>
-    <script src="game.js" defer></script>      <!-- классы и карты -->
-    <script src="script.js" defer></script>    <!-- игровая логика + Peer -->
-    <script src="ui.js" defer></script>        <!-- интерфейс -->
+    <script src="game.js" defer></script>
+    <script src="script.js" defer></script>
+    <script src="ui.js" defer></script>
 </head>
 <body>
     <div class="animated-bg"></div>
+    <!-- Индикатор соединения -->
+    <div id="connectionIndicator" class="indicator" title="Статус соединения"></div>
     <div id="gameContainer">
         <!-- Меню -->
         <div id="menu">
