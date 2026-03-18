@@ -3,7 +3,6 @@ const TILE_SIZE = 40;
 const MAP_WIDTH = 20;
 const MAP_HEIGHT = 15;
 
-// Карты (4 одинаковые для примера)
 const maps = [
     [ // карта 0
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
