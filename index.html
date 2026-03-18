@@ -5,12 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tanks Duel (тест)</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #1a1a2e; }
-        #gameCanvas { display: block; width: 800px; height: 600px; margin: 20px auto; border: 2px solid #e94560; }
-        #panel { text-align: center; color: white; font-family: Arial; padding: 20px; }
+        body { margin: 0; overflow: hidden; background: #1a1a2e; font-family: Arial; }
+        #gameCanvas { display: block; width: 800px; height: 600px; margin: 20px auto; border: 2px solid #e94560; background: #2a2a2a; }
+        #panel { text-align: center; color: white; padding: 20px; }
         button { padding: 10px 20px; margin: 5px; background: #e94560; color: white; border: none; border-radius: 5px; cursor: pointer; }
         input { padding: 10px; margin: 5px; }
-        #log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #0f3460; color: lime; padding: 10px; font-family: monospace; }
+        #log { margin-top: 20px; height: 100px; overflow-y: scroll; background: #0f3460; color: lime; padding: 10px; font-family: monospace; font-size: 12px; }
+        #mobileControls {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .ctrl-btn {
+            width: 70px;
+            height: 70px;
+            margin: 5px;
+            font-size: 28px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            opacity: 0.9;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            pointer-events: auto;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .ctrl-btn:active {
+            background: #ff6b8b;
+            transform: scale(0.95);
+        }
+        @media (max-width: 900px) {
+            #gameCanvas { width: 95vw; height: calc(95vw * 0.75); }
+            #mobileControls { display: block; }
+        }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -29,6 +62,14 @@
         <div id="log"></div>
     </div>
     <canvas id="gameCanvas" width="800" height="600" style="display: none;"></canvas>
+
+    <!-- Мобильные кнопки управления -->
+    <div id="mobileControls">
+        <button class="ctrl-btn" data-key="w">W</button>
+        <button class="ctrl-btn" data-key="a">A</button>
+        <button class="ctrl-btn" data-key="s">S</button>
+        <button class="ctrl-btn" data-key="d">D</button>
+    </div>
 
     <script src="game.js"></script>
     <script src="firebase.js"></script>
