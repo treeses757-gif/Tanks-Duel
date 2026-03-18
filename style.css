@@ -146,5 +146,22 @@ body {
         height: calc(95vw * 0.75);
         max-width: 800px;
         max-height: 600px;
+        /* Индикатор соединения */
+.indicator {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: gray;
+    box-shadow: 0 0 10px currentColor;
+    z-index: 1000;
+    transition: background-color 0.3s;
+}
+.indicator.connecting { background-color: gold; box-shadow: 0 0 15px gold; }
+.indicator.connected { background-color: limegreen; box-shadow: 0 0 15px limegreen; }
+.indicator.error { background-color: red; box-shadow: 0 0 15px red; }
+.indicator.idle { background-color: gray; box-shadow: 0 0 10px gray; }
     }
 }
