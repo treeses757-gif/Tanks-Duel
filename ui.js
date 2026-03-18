@@ -16,13 +16,18 @@ const tanksBtn = document.getElementById('tanksBtn');
 const friendsBtn = document.getElementById('friendsBtn');
 const indicator = document.getElementById('connectionIndicator');
 
+// Функция обновления индикатора
 function setIndicator(state) {
-    if (indicator) {
-        indicator.className = 'indicator ' + state;
-    }
+    indicator.className = 'indicator ' + state;
 }
 
+// Начальное состояние
 setIndicator('idle');
+
+// Генерация случайного peerId (вместо PeerJS)
+function generatePeerId() {
+    return 'player_' + Math.random().toString(36).substr(2, 9);
+}
 
 playBtn.addEventListener('click', () => {
     const nick = nicknameInput.value.trim();
@@ -33,11 +38,19 @@ playBtn.addEventListener('click', () => {
     currentUser.name = nick;
     menuDiv.style.display = 'none';
     roomPanel.style.display = 'flex';
-    setIndicator('connecting');
+    setIndicator('connecting'); // начали подключение
 });
 
 backToMenuBtn.addEventListener('click', () => {
     leaveRoom();
+    // Остановка игровых слушателей
+    if (gameInterval) clearInterval(gameInterval);
+    if (gameStateListener) gameStateListener();
+    if (playerInputsListener) playerInputsListener();
+    gameStateListener = null;
+    playerInputsListener = null;
+    gameActive = false;
+    
     roomPanel.style.display = 'none';
     menuDiv.style.display = 'flex';
     gameCanvas.classList.add('hidden');
@@ -49,7 +62,7 @@ createRoomBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
         setIndicator('connecting');
-        const peerId = await initPeer();
+        const peerId = generatePeerId();
         const code = await createRoom(peerId);
         roomStatus.innerText = `Комната создана. Код: ${code}. Ожидание игрока...`;
         listenRoom(code, {
@@ -74,7 +87,7 @@ autoSearchBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
         setIndicator('connecting');
-        const peerId = await initPeer();
+        const peerId = generatePeerId();
         const code = await autoSearch(peerId);
         roomStatus.innerText = `Подключение к комнате ${code}...`;
         listenRoom(code, {
@@ -101,7 +114,7 @@ joinRoomBtn.addEventListener('click', async () => {
     if (!currentUser.name) return;
     try {
         setIndicator('connecting');
-        const peerId = await initPeer();
+        const peerId = generatePeerId();
         await joinRoom(code, peerId);
         roomStatus.innerText = `Подключение к комнате ${code}...`;
         listenRoom(code, {
