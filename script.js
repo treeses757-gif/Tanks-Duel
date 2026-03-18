@@ -2,11 +2,13 @@ let keys = {};
 let gameInterval = null;
 let gameStateListener = null;
 let playerInputsListener = null;
+let clientInputInterval = null;
 
 window.addEventListener('keydown', e => keys[e.code] = true);
 window.addEventListener('keyup', e => keys[e.code] = false);
 
 function startGame(roomData) {
+    console.log('startGame called', roomData);
     roomStatus.innerText = 'Игра начинается...';
     roomPanel.style.display = 'none';
     gameCanvas.classList.remove('hidden');
@@ -19,8 +21,10 @@ function startGame(roomData) {
     players = {};
     players[p1.peerId] = new Tank(2 * TILE_SIZE, 7 * TILE_SIZE, 0, p1.peerId, p1.name);
     players[p2.peerId] = new Tank(17 * TILE_SIZE, 7 * TILE_SIZE, 180, p2.peerId, p2.name);
+    console.log('Players initialized', players);
     
     if (currentUser.isHost) {
+        console.log('I am host, starting game loop');
         if (gameInterval) clearInterval(gameInterval);
         gameInterval = setInterval(updateGame, 50);
         
@@ -36,12 +40,15 @@ function startGame(roomData) {
             }
         });
     } else {
+        console.log('I am client, listening for game state');
         if (gameStateListener) gameStateListener();
         gameStateListener = listenGameState((state) => {
+            console.log('Received game state', state);
             applyGameState(state);
         });
         
-        setInterval(() => {
+        if (clientInputInterval) clearInterval(clientInputInterval);
+        clientInputInterval = setInterval(() => {
             if (gameActive) {
                 sendPlayerInput({
                     w: keys['KeyW'],
@@ -62,12 +69,14 @@ function updateGame() {
     updateProjectiles();
     spawnBonuses();
     
-    updateGameState({
+    const gameState = {
         players: players,
         projectiles: projectiles,
         bonuses: bonuses,
         mapId: currentMapId
-    });
+    };
+    updateGameState(gameState);
+    console.log('Host sending state', gameState);
     
     draw();
 }
@@ -132,7 +141,10 @@ function applyGameState(state) {
 }
 
 function draw() {
+    if (!gameActive) return;
+    console.log('Drawing, players:', players);
     ctx.clearRect(0, 0, 800, 600);
+    // Карта
     for (let row = 0; row < MAP_HEIGHT; row++) {
         for (let col = 0; col < MAP_WIDTH; col++) {
             if (map[row][col] === 1) {
@@ -146,12 +158,14 @@ function draw() {
             }
         }
     }
+    // Бонусы
     bonuses.forEach(b => {
         ctx.fillStyle = b.type === 'speed' ? '#ffaa00' : '#00aaff';
         ctx.beginPath();
         ctx.arc(b.x + TILE_SIZE/2, b.y + TILE_SIZE/2, 15, 0, 2*Math.PI);
         ctx.fill();
     });
+    // Танки
     for (let id in players) {
         const p = players[id];
         ctx.save();
@@ -176,6 +190,7 @@ function draw() {
             ctx.stroke();
         }
     }
+    // Снаряды
     ctx.fillStyle = '#ff0';
     projectiles.forEach(p => {
         ctx.beginPath();
